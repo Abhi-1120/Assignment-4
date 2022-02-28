@@ -1,13 +1,13 @@
 import json
+import redis
 
 from flask import request
-import redis
 from flask_restful import Resource
+from marshmallow import ValidationError
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required
 
 from models.user import UserModel
-from marshmallow import ValidationError
 from schema.user import UserSchema
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required
 
 user_schema = UserSchema()
 r = redis.Redis(host='localhost', port=6379, password='')
@@ -33,10 +33,7 @@ class UserRegister(Resource):
             "password": user.password
         }
         u = json.dumps(data)
-        print(type(u))
-
         redis = r.set("user", u)
-        print(redis)
 
         return {'message': 'User haas been created successfully'}, 201
 
@@ -66,14 +63,12 @@ class UserLogin(Resource):
         try:
             user_json = request.get_json()
             user_detail = json.dumps(user_json)
-
             user_data = user_schema.load(user_json)
         except ValidationError as err:
             return err.messages, 400
 
         res = r.get("user")
         result = res.decode('UTF-8')
-
         user = UserModel.find_by_name(user_data.username)
 
         if result == user_detail:
