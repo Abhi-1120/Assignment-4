@@ -9,3 +9,4 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         load_only = ("password",)
         dump_only = ("id")
 
+

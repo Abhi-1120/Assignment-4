@@ -72,7 +72,8 @@ class UserLogin(Resource):
         user = UserModel.find_by_name(user_data.username)
 
         if result == user_detail:
+            user_id = user.id
             access_token = create_access_token(identity=user.id, fresh=True)
             refresh_token = create_refresh_token(user.id)
-            return {"access_token": access_token, "refresh_token": refresh_token}, 200
+            return {"User_id": user_id, "access_token": access_token, "refresh_token": refresh_token}, 200
         return {"message": "INVALID_CREDENTIALS"}, 401

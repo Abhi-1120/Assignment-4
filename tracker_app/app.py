@@ -11,4 +11,4 @@ api.add_resource(TrackerCount, '/tracker/count')
 api.add_resource(TrackerInsert, '/tracker/insert')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=3000, debug=True)
