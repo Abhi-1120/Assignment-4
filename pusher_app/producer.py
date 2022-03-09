@@ -1,17 +1,18 @@
-from flask import Flask
-from flask_restful import Resource, Api
 import pika
-from flask_jwt_extended import jwt_required, JWTManager
 import jwt
 import random
+from flask import Flask
+from flask_restful import Resource, Api
+from flask_jwt_extended import jwt_required, JWTManager
+
 
 app = Flask(__name__)
-api = Api(app)
 app.config['DEBUG'] = True
 app.config['JWT_TOKEN_LOCATION'] = 'headers'
 app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
 app.secret_key = 'Abhi'
+api = Api(app)
 jwt_manager = JWTManager(app)
 
 data = {
@@ -24,19 +25,16 @@ data = {
 
 
 class HelloWorld(Resource):
+    def __init__(self):
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(queue='wotnot', durable=True)
+
     @jwt_required()
     def get(self, data=data):
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-        channel = connection.channel()
-        channel.queue_declare(queue='python', durable=True)
-        channel.basic_publish(
-            exchange='test',
-            routing_key='Abhi',
-            body=str(data),
-            properties=pika.BasicProperties(
-                delivery_mode=2,
-            ))
-        connection.close()
+        self.channel.basic_publish(exchange='test-wotnot', routing_key='python', body=str(data),
+                                   properties=pika.BasicProperties(delivery_mode=2, ))
+        self.connection.close()
         token = jwt.encode(payload=data, key="Abhi")
         data = jwt.decode(token, "Abhi", algorithms=["HS256"])
         return data
