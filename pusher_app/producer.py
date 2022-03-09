@@ -5,7 +5,6 @@ from flask_jwt_extended import jwt_required, JWTManager
 import jwt
 import random
 
-
 app = Flask(__name__)
 api = Api(app)
 app.config['DEBUG'] = True
@@ -44,7 +43,6 @@ class HelloWorld(Resource):
 
 
 api.add_resource(HelloWorld, '/get')
-
 
 if __name__ == '__main__':
     app.run(port=5000)

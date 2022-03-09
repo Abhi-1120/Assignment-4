@@ -1,8 +1,7 @@
 from flask_restful import Resource
 from datetime import datetime
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, helpers
 
-from Validator_app.consumer import category
 
 es = Elasticsearch([{"scheme": "http", "host": "localhost", "port": 9200}])
 
@@ -13,7 +12,7 @@ class Tracker(Resource):
             "id": 5,
             "name": "Abhi Patel",
             "message": "Hello World1",
-            "category": category,
+            "category": "category",
             "created_at": datetime.now()
         }
         resp = es.index(index="tracker", document=doc)
@@ -35,7 +34,7 @@ class TrackerCount(Resource):
         data = {
             "query": {
                 "match": {
-                    "category": "Direct"
+                    "category": "Failed"
                 },
             }
         }
@@ -54,12 +53,11 @@ class TrackerInsert(Resource):
                     "id": 1+j,
                     "name": "Abhi",
                     "message": "Hello",
-                    "category": "Failed",
+                    "category": "Direct",
                     "created_at": datetime.now()
                 }
             }
-            for j in range(0, 10)
+            for j in range(10, 20)
         ]
-
-        res = es.bulk(data)
+        res = helpers.bulk(es, data)
         return res
