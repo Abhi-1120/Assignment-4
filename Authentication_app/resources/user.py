@@ -5,10 +5,11 @@ from flask_restful import Resource
 from marshmallow import ValidationError
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required
 
-from models.user import UserModel
-from schema.user import UserSchema
+from Authentication_app.models.user import UserModel
+from Authentication_app.schema.user import UserSchema
 
 user_schema = UserSchema()
+
 r = redis.Redis(host='localhost', port=6379, password='')
 
 
@@ -33,7 +34,6 @@ class UserRegister(Resource):
         }
         u = json.dumps(data)
         redis = r.set("user", u)
-
         return {'message': 'User haas been created successfully'}, 201
 
 
@@ -72,7 +72,7 @@ class UserLogin(Resource):
 
         if result == user_detail:
             user_id = user.id
-            access_token = create_access_token(identity=user.id, fresh=True)
+            access_token = create_access_token(identity=[user.id, user.username], fresh=True)
             refresh_token = create_refresh_token(user.id)
             return {"User_id": user_id, "access_token": access_token, "refresh_token": refresh_token}, 200
         return {"message": "INVALID_CREDENTIALS"}, 401

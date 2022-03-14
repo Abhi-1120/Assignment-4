@@ -1,4 +1,4 @@
-from db import db
+from Authentication_app.database import db
 
 
 class UserModel(db.Model):

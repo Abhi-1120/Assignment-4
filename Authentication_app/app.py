@@ -3,7 +3,7 @@ from flask_restful import Api
 from flask_jwt_extended import JWTManager
 
 from ma import ma
-from db import db
+from database import db
 from resources.user import User, UserRegister, UserLogin
 
 app = Flask(__name__)

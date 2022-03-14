@@ -1,28 +1,27 @@
-from flask_restful import Resource
 from datetime import datetime
+from flask import request
+from flask_restful import Resource
 from elasticsearch import Elasticsearch, helpers
-
 
 es = Elasticsearch([{"scheme": "http", "host": "localhost", "port": 9200}])
 
 
 class Tracker(Resource):
-    def post(self):
-        doc = {
-            "id": 5,
-            "name": "Abhi Patel",
-            "message": "Hello World1",
-            "category": "category",
-            "created_at": datetime.now()
-        }
-        resp = es.index(index="tracker", document=doc)
-        return resp['result']
-
     def get(self):
+        payload = request.json
         data = {
-            "_source": ["message"],
             "query": {
-                "match_all": {}
+                "bool": {
+                    "must": [
+                        {
+                            "wildcard": {
+                                "message": {
+                                    "value": "*" + payload['message'].lower() + "*"
+                                }
+                            }
+                        }
+                    ]
+                }
             }
         }
         res = es.search(index="tracker", body=data, size=1000)
@@ -31,33 +30,47 @@ class Tracker(Resource):
 
 class TrackerCount(Resource):
     def get(self):
+        payload = request.json
+        data = []
         data = {
-            "query": {
-                "match": {
-                    "category": "Failed"
+            "aggs": {
+                "category": {
+                    "terms": {
+                        "field": "category.keyword"
+                    }
                 },
+                "created_at": {
+                    "terms": {
+                        "field": "created_at"
+                    }
+                }
             }
         }
-        res = es.count(index="tracker", body=data)
-        return res['count']
+        res = es.search(index="tracker", body=data)
+        return res['aggregations']
 
 
 class TrackerInsert(Resource):
-    def get(self):
-        data = [
-            {
-                "_index": "tracker",
-                "_type": "_doc",
-                "_id": j,
-                "_source": {
-                    "id": 1+j,
-                    "name": "Abhi",
-                    "message": "Hello",
-                    "category": "Direct",
-                    "created_at": datetime.now()
+    def post(self):
+        payload = request.json
+        index = "tracker"
+        data = []
+        for item in payload['data']:
+            data.append(
+                {
+                    "_index": index,
+                    "_type": "_doc",
+                    "_source": {
+                        "id": item['id'],
+                        "message": item["message"],
+                        "count": item['count'],
+                        "category": item["category"],
+                        "created_at": datetime.now()
+                    }
                 }
-            }
-            for j in range(10, 20)
-        ]
+            )
         res = helpers.bulk(es, data)
-        return res
+        if res:
+            return {"ok": True}
+        else:
+            return {"ok": False}
