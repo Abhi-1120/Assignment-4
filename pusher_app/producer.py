@@ -1,3 +1,5 @@
+import ast
+
 import pika
 import jwt
 import random
@@ -15,7 +17,7 @@ app.config['JWT_HEADER_TYPE'] = 'Bearer'
 app.config['SECRET_KEY'] = 'Abhi'
 api = Api(app)
 
-r = redis.Redis(host='localhost', port=6379, password='')
+r = redis.StrictRedis(host='localhost', port=6379, password='')
 jwt_manager = JWTManager(app)
 
 
@@ -31,14 +33,18 @@ class HelloWorld(Resource):
     def post(self):
         current_identity = get_jwt_identity()
         payload = request.json
+        r_get = r.get("{id}_user".format(id=current_identity))
+        redis = r.hincrby(r_get, 'count', 1)
+        print(redis)
 
         data = {
-            "id": current_identity[0],
+            "id": current_identity,
             "message": payload['message'],
             "random": random.randint(0, 60),
             "category": "Direct",
-            "count": 1
+            "count": redis
         }
+        print(data)
         if current_identity:
             self.channel.basic_publish(exchange='test-wotnot', routing_key='python', body=str(data),
                                        properties=pika.BasicProperties(delivery_mode=2, ))

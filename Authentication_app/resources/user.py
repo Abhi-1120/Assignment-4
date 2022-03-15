@@ -29,11 +29,13 @@ class UserRegister(Resource):
             user.save_to_db()
 
         data = {
+            "id": user.id,
             "username": user.username,
-            "password": user.password
+            "password": user.password,
+            "count": 0
         }
         u = json.dumps(data)
-        redis = r.set("user", u)
+        redis = r.set("{id}_user".format(id=user.id), u)
         return {'message': 'User haas been created successfully'}, 201
 
 
@@ -66,13 +68,7 @@ class UserLogin(Resource):
         except ValidationError as err:
             return err.messages, 400
 
-        res = r.get("user")
-        result = res.decode('UTF-8')
         user = UserModel.find_by_name(user_data.username)
-
-        if result == user_detail:
-            user_id = user.id
-            access_token = create_access_token(identity=[user.id, user.username], fresh=True)
-            refresh_token = create_refresh_token(user.id)
-            return {"User_id": user_id, "access_token": access_token, "refresh_token": refresh_token}, 200
-        return {"message": "INVALID_CREDENTIALS"}, 401
+        access_token = create_access_token(identity=user.id, fresh=True)
+        refresh_token = create_refresh_token(user.id)
+        return {"access_token": access_token, "refresh_token": refresh_token}, 200

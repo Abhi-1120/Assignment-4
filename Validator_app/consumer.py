@@ -29,13 +29,14 @@ def callback(ch, method, properties, body):
         "data": [
             {
                 "id": data['id'],
-                "message": data['message'][0],
+                "message": data['message'],
                 "count": data['count'],
                 "category": data['category']
             }
         ]
     }
     response = requests.post("http://127.0.0.1:3000/tracker/insert", json=payload)
+    print(data)
     print(response.json())
     print(response.status_code)
 
